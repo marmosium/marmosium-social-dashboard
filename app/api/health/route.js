@@ -1,6 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin.js'
 import { listAccessiblePages } from '@/lib/meta.js'
 
+// Her çağrıda gerçekten canlı kontrol yapılsın, Next.js bu route'u önbelleğe almasın
+export const dynamic = 'force-dynamic'
+
 async function checkSupabase() {
   try {
     const { error } = await supabaseAdmin.from('brands').select('id').limit(1)

@@ -1,5 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin.js'
 
+// request.url/cookie okuduğu için Next.js bunu statik render etmeye çalışıyor, açıkça dinamik işaretliyoruz
+export const dynamic = 'force-dynamic'
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)

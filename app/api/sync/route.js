@@ -2,6 +2,9 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin.js'
 import { listAccessiblePages, getInstagramAccountId, fetchPageInsights, fetchInstagramInsights } from '@/lib/meta.js'
 import { format, subDays } from 'date-fns'
 
+// GET handler'ı request.headers okuduğu ve cron her zaman canlı çalışması gerektiği için dinamik işaretliyoruz
+export const dynamic = 'force-dynamic'
+
 // Graph API insights "values" dizisini tarihe göre { [date]: { metricName: value } } haline getirir
 function pivotByDate(rawMetrics) {
   const byDate = {}
