@@ -84,7 +84,7 @@ export default function Home() {
       .from('daily_metrics')
       .select('*')
       .in('brand_id', brandIds)
-      .order('created_at', { ascending: false })
+      .order('metric_date', { ascending: false })
 
     if (error) {
       console.error('Metrik hatası:', error)
@@ -92,10 +92,14 @@ export default function Home() {
     }
 
     const map = {}
-    let latestCreatedAt = null
+    let latestUpdatedAt = null
 
     for (const row of data || []) {
-      if (!latestCreatedAt) latestCreatedAt = row.created_at
+      // "son senkronizasyon" için created_at değil updated_at kullanılıyor — created_at satır ilk
+      // oluşturulduğunda sabitleniyor, updated_at ise her senkronizasyonda gerçekten güncelleniyor.
+      if (row.updated_at && (!latestUpdatedAt || row.updated_at > latestUpdatedAt)) {
+        latestUpdatedAt = row.updated_at
+      }
       if (!map[row.brand_id]) map[row.brand_id] = {}
       if (!map[row.brand_id][row.platform]) {
         map[row.brand_id][row.platform] = row
@@ -103,7 +107,7 @@ export default function Home() {
     }
 
     setMetrics(map)
-    setLastSyncedAt(latestCreatedAt)
+    setLastSyncedAt(latestUpdatedAt)
   }
 
   async function handleSync() {
@@ -229,10 +233,21 @@ export default function Home() {
       )
     : null
 
+  const loadingBarPortal =
+    mounted && syncing
+      ? createPortal(
+          <div className="loading-bar-track">
+            <div className="loading-bar-fill" />
+          </div>,
+          document.body
+        )
+      : null
+
   if (authLoading || loading) {
     return (
       <>
         {syncModalPortal}
+        {loadingBarPortal}
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-3">
             <svg className="animate-spin h-5 w-5 text-zinc-400 mx-auto" fill="none" viewBox="0 0 24 24">
@@ -249,6 +264,7 @@ export default function Home() {
   return (
     <div className="space-y-6">
       {syncModalPortal}
+      {loadingBarPortal}
 
       {/* Welcome & System Status Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-800">

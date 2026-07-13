@@ -18,6 +18,7 @@ function pivotByDate(rawMetrics) {
 async function runSync() {
   const until = format(new Date(), 'yyyy-MM-dd')
   const since = format(subDays(new Date(), 7), 'yyyy-MM-dd')
+  const syncedAt = new Date().toISOString()
 
   // Markalar artık burada manuel eklenmiyor; Meta sistem kullanıcısının erişebildiği
   // tüm Facebook Sayfaları otomatik olarak keşfedilip brands tablosuna kaydediliyor/güncelleniyor.
@@ -68,6 +69,7 @@ async function runSync() {
               engagement: values.page_post_engagements ?? null,
               profile_views: values.page_views_total ?? null,
               raw: values,
+              updated_at: syncedAt,
             },
             { onConflict: 'brand_id,platform,metric_date' }
           )
@@ -104,6 +106,7 @@ async function runSync() {
               link_clicks: values.website_clicks ?? null,
               follower_change: values.follower_count ?? null,
               raw: values,
+              updated_at: syncedAt,
             },
             { onConflict: 'brand_id,platform,metric_date' }
           )

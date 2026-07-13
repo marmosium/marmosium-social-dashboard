@@ -151,6 +151,25 @@ body {
     animation: gradient-shift 6s linear infinite;
   }
 
+  /* Senkronizasyon sırasında üstte gösterilen ince ilerleme çubuğu */
+  .loading-bar-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    z-index: 200;
+  }
+  .loading-bar-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-image: linear-gradient(90deg, #6366f1, #d946ef, #22d3ee);
+    animation: loading-bar-slide 1.3s ease-in-out infinite;
+  }
+
   .btn-shimmer {
     position: relative;
     overflow: hidden;
@@ -201,6 +220,12 @@ body {
 @keyframes bar-grow {
   from { transform: scaleY(0); }
   to { transform: scaleY(1); }
+}
+
+@keyframes loading-bar-slide {
+  0% { left: -40%; width: 40%; }
+  50% { left: 30%; width: 50%; }
+  100% { left: 100%; width: 40%; }
 }
 
 @keyframes line-draw {

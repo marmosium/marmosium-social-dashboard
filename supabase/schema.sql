@@ -29,12 +29,14 @@ create table if not exists daily_metrics (
   follower_change int,     -- o günkü net takipçi değişimi (IG: follower_count günlük seri). FB'de null, rapor tarafında toplam takipçiden hesaplanır.
   raw jsonb,                -- Graph API'den gelen ham veri, ileride yeni metrik eklemek için yedek
   created_at timestamptz default now(),
+  updated_at timestamptz default now(),  -- satır her upsert'lendiğinde güncellenir (created_at ilk oluşturmada sabitlenip bir daha değişmiyor)
   unique (brand_id, platform, metric_date)  -- aynı gün için tekrar veri yazılırsa üzerine yazsın (upsert)
 );
 
 -- Mevcut kurulumlarda tabloyu ilk sürümden güncellemek için (yeni kurulumda yukarıdaki create table zaten yeterli):
 alter table daily_metrics add column if not exists link_clicks int;
 alter table daily_metrics add column if not exists follower_change int;
+alter table daily_metrics add column if not exists updated_at timestamptz default now();
 
 -- Rapor sorgularını hızlandırmak için index
 create index if not exists idx_daily_metrics_brand_date
