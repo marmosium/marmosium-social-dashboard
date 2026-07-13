@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.env.local
+.env
+*.log
+.DS_Store
+
+# Proje kökünde yanlışlıkla oluşmuş, Next.js ile ilgisi olmayan sistem benzeri klasörler
+/System/
+/Library/
+/bin/
+/etc/
+/home/
+/sbin/
+/usr/
+/var/
+/.resolve/
+
+# Kullanılmayan eski proje kopyası
+/marmosium-social-dashboard/
