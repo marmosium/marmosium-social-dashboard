@@ -6,6 +6,7 @@ import { startOfMonth, endOfMonth, subDays, differenceInCalendarDays, format, is
 import { supabase } from '../../../lib/supabaseClient.js'
 import { useAuth } from '../../context/AuthContext.js'
 import { PlatformReport } from './PlatformReport.js'
+import { BrandLogo } from '../../components/BrandLogo.js'
 
 function toISODate(date) {
   return format(date, 'yyyy-MM-dd')
@@ -131,10 +132,13 @@ export default function BrandReportPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
-        <div>
-          <a href="/" className="text-xs text-zinc-500 hover:text-indigo-300 transition-button">← Dashboard'a dön</a>
-          <h2 className="text-xl font-bold tracking-tight text-white mt-1">{brand?.name} — Performans Raporu</h2>
-          {brand?.client_name && <p className="text-zinc-500 text-xs mt-0.5">{brand.client_name}</p>}
+        <div className="flex items-center gap-3">
+          <BrandLogo name={brand?.name} className="h-16 w-36" />
+          <div>
+            <a href="/" className="text-xs text-zinc-500 hover:text-indigo-300 transition-button">← Dashboard'a dön</a>
+            <h2 className="text-xl font-bold tracking-tight text-white mt-1">{brand?.name} — Performans Raporu</h2>
+            {brand?.client_name && <p className="text-zinc-500 text-xs mt-0.5">{brand.client_name}</p>}
+          </div>
         </div>
 
         <input

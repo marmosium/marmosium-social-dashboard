@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from './context/AuthContext.js'
 import { useRouter } from 'next/navigation'
+import { BrandLogo } from './components/BrandLogo.js'
 
 function formatDateStr(dateStr) {
   if (!dateStr) return '–'
@@ -358,13 +359,18 @@ export default function Home() {
           </div>
         ) : (
           /* Brands Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {brands.map((brand) => (
-              <div key={brand.id} className="premium-card rounded-xl p-4 transition-card relative">
-                <h4 className="font-bold text-white text-sm">{brand.name}</h4>
-                {brand.client_name && <p className="text-[11px] text-zinc-500 mt-0.5">{brand.client_name}</p>}
+              <div key={brand.id} className="premium-card rounded-2xl p-6 transition-card relative">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <BrandLogo name={brand.name} className="h-20 w-full max-w-[220px]" />
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-white text-base truncate">{brand.name}</h4>
+                    {brand.client_name && <p className="text-xs text-zinc-500 mt-0.5 truncate">{brand.client_name}</p>}
+                  </div>
+                </div>
 
-                <div className="space-y-2 mt-4 pt-3 border-t border-white/10 text-xs text-zinc-400">
+                <div className="space-y-2 mt-5 pt-4 border-t border-white/10 text-xs text-zinc-400">
                   <div className="flex flex-col gap-1 text-[10px]">
                     <span className="text-zinc-500 flex items-center gap-1.5 shrink-0">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"></span>
@@ -386,9 +392,9 @@ export default function Home() {
                 </div>
 
                 {(metrics[brand.id]?.facebook || metrics[brand.id]?.instagram) && (
-                  <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 gap-2">
+                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3">
                     {metrics[brand.id]?.facebook && (
-                      <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 p-2 min-w-0">
+                      <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 p-3 min-w-0">
                         <p className="text-[9px] text-blue-300/80 uppercase tracking-wide font-semibold">Facebook</p>
                         <p className="text-sm font-bold text-white mt-1 truncate">
                           {metrics[brand.id].facebook.followers ?? '–'} <span className="text-[10px] font-normal text-zinc-500">takipçi</span>
@@ -399,7 +405,7 @@ export default function Home() {
                       </div>
                     )}
                     {metrics[brand.id]?.instagram && (
-                      <div className="rounded-lg bg-fuchsia-500/5 border border-fuchsia-500/10 p-2 min-w-0">
+                      <div className="rounded-lg bg-fuchsia-500/5 border border-fuchsia-500/10 p-3 min-w-0">
                         <p className="text-[9px] text-fuchsia-300/80 uppercase tracking-wide font-semibold">Instagram</p>
                         <p className="text-sm font-bold text-white mt-1 truncate">
                           {metrics[brand.id].instagram.followers ?? '–'} <span className="text-[10px] font-normal text-zinc-500">takipçi</span>
@@ -412,7 +418,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="mt-4 pt-3 border-t border-white/10 flex justify-end">
+                <div className="mt-5 pt-4 border-t border-white/10 flex justify-end">
                   <a href={`/brands/${brand.id}`} className="text-xs font-medium text-zinc-400 hover:text-indigo-300 flex items-center gap-1 transition-button">
                     İncele <span className="text-[10px]">→</span>
                   </a>
