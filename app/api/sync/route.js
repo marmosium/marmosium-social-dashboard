@@ -90,7 +90,6 @@ async function runSync() {
         // aralığın son gününe (until) ekleniyor. "reach" ve "follower_count" zaten günlük geldiği
         // için normal şekilde byDate içinde yer alıyor.
         if (!byDate[until]) byDate[until] = {}
-        byDate[until].views = totals.views
         byDate[until].profile_views = totals.profile_views
         byDate[until].total_interactions = totals.total_interactions
         byDate[until].website_clicks = totals.website_clicks
@@ -103,7 +102,7 @@ async function runSync() {
               metric_date,
               followers,
               reach: values.reach ?? null,
-              impressions: values.views ?? null,
+              impressions: values.reach ?? null,
               engagement: values.total_interactions ?? null,
               profile_views: values.profile_views ?? null,
               link_clicks: values.website_clicks ?? null,
