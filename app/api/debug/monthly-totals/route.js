@@ -32,6 +32,7 @@ const BRANDS = [
 // Meta total_value: since/until arasında en fazla 30 gün olabilir (#100 hatası).
 // 31 günlük Ağustos'u iki parçaya bölüp topluyoruz.
 const PERIODS = [
+  { key: 'temmuz', since: '2026-07-01', until: '2026-08-01' },
   { key: 'agustos_1', since: '2026-08-01', until: '2026-08-17' },
   { key: 'agustos_2', since: '2026-08-17', until: '2026-09-01' },
   { key: 'eylul_1_10', since: '2026-09-01', until: '2026-09-11' },
