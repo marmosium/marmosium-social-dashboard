@@ -28,8 +28,13 @@ export async function GET() {
         .filter((f) => f.toLowerCase().endsWith('.png') || f.toLowerCase().endsWith('.pdf'))
         .sort()
       if (dosyalar.length === 0) continue
-      if (!ayMap[ay]) ayMap[ay] = []
-      ayMap[ay].push({
+      // Ay klasor adlari macOS/Finder kaynakli Unicode normalizasyon farki
+      // gosterebiliyor (ör. "Ağustos" NFC ile NFD - gozle ayni, byte'ta farkli).
+      // Gruplama anahtari her zaman NFC; dosya URL'i ise diskteki gercek (ham)
+      // klasor adiyla kuruluyor ki statik dosya sunumu bozulmasin.
+      const ayAnahtari = ay.normalize('NFC')
+      if (!ayMap[ayAnahtari]) ayMap[ayAnahtari] = []
+      ayMap[ayAnahtari].push({
         marka,
         dosyalar: dosyalar.map((f) => ({
           ad: f,

@@ -19,6 +19,17 @@ function altDizinler(p) {
   return fs.readdirSync(p).filter((ad) => fs.statSync(path.join(p, ad)).isDirectory())
 }
 
+// Klasor adlari macOS/Finder kaynakli Unicode normalizasyon farki gosterebiliyor
+// (ör. "Ağustos" NFC ile NFD - gozle ayni, byte'ta farkli). URL'den gelen ad ile
+// diskteki GERCEK klasor adini NFC-normalize karsilastirmasiyla eslestirir; aksi
+// halde bazi markalarin klasoru sessizce atlanip ZIP'ten eksik cikabilirdi.
+function eslesenDizinAdi(parentYolu, hedefAd) {
+  if (!fs.existsSync(parentYolu)) return null
+  const hedefNFC = hedefAd.normalize('NFC')
+  const adlar = fs.readdirSync(parentYolu).filter((ad) => fs.statSync(path.join(parentYolu, ad)).isDirectory())
+  return adlar.find((ad) => ad.normalize('NFC') === hedefNFC) || null
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const marka = searchParams.get('marka')
@@ -31,7 +42,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Rapor klasörü bulunamadı' }, { status: 404 })
   }
 
-  const markalar = marka ? [marka] : altDizinler(KOK)
+  const markalar = marka ? [eslesenDizinAdi(KOK, marka)].filter(Boolean) : altDizinler(KOK)
 
   const archive = archiver('zip', { zlib: { level: 9 } })
   let dosyaSayisi = 0
@@ -39,7 +50,7 @@ export async function GET(request) {
   for (const m of markalar) {
     const markaYolu = path.join(KOK, m)
     if (!fs.existsSync(markaYolu) || !fs.statSync(markaYolu).isDirectory()) continue
-    const aylar = ay ? [ay] : altDizinler(markaYolu)
+    const aylar = ay ? [eslesenDizinAdi(markaYolu, ay)].filter(Boolean) : altDizinler(markaYolu)
     for (const a of aylar) {
       const ayYolu = path.join(markaYolu, a)
       if (!fs.existsSync(ayYolu) || !fs.statSync(ayYolu).isDirectory()) continue
