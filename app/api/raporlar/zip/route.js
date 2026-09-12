@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'stream'
-import archiver from 'archiver'
+import { ZipArchive } from 'archiver'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -44,7 +44,9 @@ export async function GET(request) {
 
   const markalar = marka ? [eslesenDizinAdi(KOK, marka)].filter(Boolean) : altDizinler(KOK)
 
-  const archive = archiver('zip', { zlib: { level: 9 } })
+  // archiver@8 eski 'archiver(format, options)' fabrika fonksiyonunu kaldirdi;
+  // artik format-ozel bir sinif orneklenir (bkz. archiver README v8).
+  const archive = new ZipArchive({ zlib: { level: 9 } })
   let dosyaSayisi = 0
 
   for (const m of markalar) {
