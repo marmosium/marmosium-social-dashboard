@@ -176,6 +176,7 @@ export default function BrandReportPage() {
       ) : (
         <div className="glass rounded-2xl p-5 sm:p-6">
           <PlatformReport
+            platform={activeTab}
             rows={rowsByPlatform[activeTab] || []}
             previousRows={prevRowsByPlatform[activeTab] || []}
             sinceLabel={meta.since ? formatDateStr(meta.since) : ''}

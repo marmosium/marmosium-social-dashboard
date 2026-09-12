@@ -71,6 +71,13 @@ async function runSync() {
               followers,
               engagement: values.page_post_engagements ?? null,
               profile_views: values.page_views_total ?? null,
+              // 12 Eylül 2026: canlı test edilip doğrulanan tek geçerli "bağlantı
+              // tıklaması" karşılığı — bkz. lib/meta.js'teki fetchPageInsights yorumu.
+              // "reach"/"impressions" için Graph API'de bugün geçerli bir metrik
+              // bulunamadı, o yüzden onlar bilinçli olarak set edilmiyor (NULL kalıyor,
+              // lib/reportUtils.js bunu "ölçülemiyor" olarak gösteriyor, yanlışlıkla 0
+              // olarak değil).
+              link_clicks: values.page_total_actions ?? null,
               raw: values,
               updated_at: syncedAt,
             },

@@ -10,7 +10,15 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import { sumMetrics, computeChange, computeRatios, buildTrendNote, buildHighlights, buildAssessment } from '../../../lib/reportUtils.js'
+import {
+  sumMetrics,
+  computeChange,
+  computeRatios,
+  buildTrendNote,
+  buildHighlights,
+  buildAssessment,
+  PLATFORM_METRIC_DESTEGI,
+} from '../../../lib/reportUtils.js'
 
 function formatDateStr(dateStr) {
   if (!dateStr) return '–'
@@ -86,7 +94,7 @@ const HIGHLIGHT_STYLES = {
 
 const HIGHLIGHT_ICONS = { success: '✓', warning: '!', info: 'i' }
 
-export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, prevSinceLabel, prevUntilLabel }) {
+export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, prevSinceLabel, prevUntilLabel, platform }) {
   if (!rows || rows.length === 0) {
     return (
       <div className="text-center py-14 border border-dashed border-white/15 rounded-xl bg-black/10">
@@ -96,12 +104,18 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
     )
   }
 
-  const totals = sumMetrics(rows)
-  const previousTotals = sumMetrics(previousRows || [])
+  const totals = sumMetrics(rows, platform)
+  const previousTotals = sumMetrics(previousRows || [], platform)
+
+  // Bu platformda Meta'dan hiç kaynaklanmayan metrikler (ör. Facebook'ta Erişim/
+  // Görüntülemeler) — 12 Eylül 2026'da canlı test edilerek doğrulandı, tahmin
+  // edilmedi. "Takipçiler" burada Facebook için de true görünür çünkü
+  // sumMetrics() onu güvenilir günlük takipçi toplamından kendi türetiyor.
+  const destek = PLATFORM_METRIC_DESTEGI[platform] || PLATFORM_METRIC_DESTEGI.instagram
 
   const changes = {}
   for (const { key } of METRIC_CARDS) {
-    changes[key] = computeChange(totals[key] ?? 0, previousTotals[key] ?? 0)
+    changes[key] = computeChange(totals[key], previousTotals[key])
   }
 
   const ratios = computeRatios(totals)
@@ -119,6 +133,14 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
       follower_change: row.follower_change ?? 0,
     }))
 
+  // Grafikte yalnızca bu platformda GERÇEKTEN günlük kırılımı olan çizgiler
+  // gösteriliyor. "Takipçiler" KPI kartında Facebook için türetilmiş bir dönem
+  // toplamı var (bkz. yukarısı) ama günlük kırılımı yok — o yüzden grafikte
+  // yanıltıcı düz bir "0" çizgisi çizmemek için Facebook'ta bilerek atlanıyor.
+  const cizilecekCizgiler = CHART_LINES.filter(
+    (line) => destek[line.key] !== false && !(platform === 'facebook' && line.key === 'follower_change')
+  )
+
   return (
     <div className="space-y-6">
       <p className="text-xs text-zinc-500">
@@ -132,13 +154,16 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {METRIC_CARDS.map(({ key, label, color, description }) => {
             const badge = formatPercentBadge(changes[key].percent)
+            const olculemiyor = totals[key] === null
             return (
               <div key={key} className="premium-card rounded-xl p-3">
                 <p className={`text-[10px] uppercase tracking-wide font-semibold ${color}`}>{label}</p>
                 <p className="text-xl font-bold text-white mt-1">{formatNumber(totals[key])}</p>
                 <p className={`text-[11px] font-medium mt-1 ${badge.className}`}>{badge.text}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5">Önceki dönem: {formatNumber(previousTotals[key])}</p>
-                <p className="text-[10px] text-zinc-500 mt-2 leading-snug border-t border-white/10 pt-2">{description}</p>
+                <p className="text-[10px] text-zinc-500 mt-2 leading-snug border-t border-white/10 pt-2">
+                  {olculemiyor ? 'Bu platformda şu an Meta tarafından ölçülemiyor.' : description}
+                </p>
               </div>
             )
           })}
@@ -157,7 +182,7 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
               <YAxis tick={{ fontSize: 10, fill: '#71717a' }} />
               <Tooltip contentStyle={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              {CHART_LINES.map((line) => (
+              {cizilecekCizgiler.map((line) => (
                 <Line key={line.key} type="monotone" dataKey={line.key} name={line.name} stroke={line.color} strokeWidth={2} dot={false} />
               ))}
             </LineChart>
@@ -227,7 +252,11 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
               <p className="text-xl font-bold text-white mt-1">
                 {r.value === null ? '–' : `%${r.value.toFixed(2).replace('.', ',')}`}
               </p>
-              <p className="text-[10px] text-zinc-500 mt-2 leading-snug border-t border-white/10 pt-2">{r.description}</p>
+              <p className="text-[10px] text-zinc-500 mt-2 leading-snug border-t border-white/10 pt-2">
+                {r.value === null && destek.reach === false
+                  ? 'Bu platformda Erişim ölçülemediği için hesaplanamıyor.'
+                  : r.description}
+              </p>
             </div>
           ))}
         </div>
