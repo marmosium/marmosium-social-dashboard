@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { startOfMonth, endOfMonth, subMonths, format, isSameMonth } from 'date-fns'
 import { supabase } from '../../../lib/supabaseClient.js'
 import { useAuth } from '../../context/AuthContext.js'
+import { useTheme } from '../../context/ThemeContext.js'
 import { PlatformReport } from './PlatformReport.js'
 import { BrandLogo } from '../../components/BrandLogo.js'
 
@@ -20,6 +21,7 @@ function formatDateStr(isoDate) {
 export default function BrandReportPage() {
   const { id } = useParams()
   const { user, loading: authLoading } = useAuth()
+  const { koyu } = useTheme()
   const router = useRouter()
 
   const [brand, setBrand] = useState(null)
@@ -121,8 +123,8 @@ export default function BrandReportPage() {
   if (error) {
     return (
       <div className="glass rounded-2xl p-6 text-center">
-        <p className="text-sm text-red-400">Marka bulunamadı ya da bir hata oluştu: {error}</p>
-        <a href="/" className="text-xs text-indigo-300 hover:text-indigo-200 mt-3 inline-block">← Dashboard'a dön</a>
+        <p className={`text-sm ${koyu ? 'text-red-400' : 'text-red-600'}`}>Marka bulunamadı ya da bir hata oluştu: {error}</p>
+        <a href="/" className="text-xs text-indigo-400 hover:text-indigo-300 mt-3 inline-block">← Dashboard'a dön</a>
       </div>
     )
   }
@@ -133,14 +135,21 @@ export default function BrandReportPage() {
     brand?.fb_page_id && 'facebook',
   ].filter(Boolean)
 
+  const baslikRengi = koyu ? 'text-white' : 'text-zinc-900'
+  const kenarlikKalin = koyu ? 'border-zinc-800' : 'border-zinc-200'
+  const girdiSinifi = koyu
+    ? 'bg-white/5 border-white/10 text-zinc-200 focus:border-indigo-400/60'
+    : 'bg-black/[0.03] border-zinc-300 text-zinc-900 focus:border-indigo-500'
+  const bosDurum = koyu ? 'border-white/15 bg-black/10' : 'border-zinc-300 bg-zinc-50'
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b ${kenarlikKalin}`}>
         <div className="flex items-center gap-3">
           <BrandLogo name={brand?.name} className="h-16 w-36" />
           <div>
-            <a href="/" className="text-xs text-zinc-500 hover:text-indigo-300 transition-button">← Dashboard'a dön</a>
-            <h2 className="text-xl font-bold tracking-tight text-white mt-1">{brand?.name} — Performans Raporu</h2>
+            <a href="/" className="text-xs text-zinc-500 hover:text-indigo-400 transition-button">← Dashboard'a dön</a>
+            <h2 className={`text-xl font-bold tracking-tight mt-1 ${baslikRengi}`}>{brand?.name} — Performans Raporu</h2>
             {brand?.client_name && <p className="text-zinc-500 text-xs mt-0.5">{brand.client_name}</p>}
           </div>
         </div>
@@ -149,7 +158,7 @@ export default function BrandReportPage() {
           type="month"
           value={monthValue}
           onChange={(e) => setMonthValue(e.target.value)}
-          className="bg-white/5 border border-white/10 text-zinc-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-indigo-400/60 transition-button"
+          className={`rounded-lg px-3 py-2 text-sm outline-none transition-button border ${girdiSinifi}`}
         />
       </div>
 
@@ -160,7 +169,7 @@ export default function BrandReportPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-button ${
-                activeTab === tab ? 'btn-gradient' : 'glass text-zinc-400 hover:text-zinc-200'
+                activeTab === tab ? 'btn-gradient' : `glass text-zinc-400 ${koyu ? 'hover:text-zinc-200' : 'hover:text-zinc-900'}`
               }`}
             >
               {tab === 'instagram' ? 'Instagram' : 'Facebook'}
@@ -170,7 +179,7 @@ export default function BrandReportPage() {
       )}
 
       {availableTabs.length === 0 ? (
-        <div className="text-center py-14 border border-dashed border-white/15 rounded-xl bg-black/10">
+        <div className={`text-center py-14 border border-dashed rounded-xl ${bosDurum}`}>
           <p className="text-zinc-400 text-sm">Bu markaya bağlı bir Facebook Sayfası veya Instagram hesabı yok.</p>
         </div>
       ) : (

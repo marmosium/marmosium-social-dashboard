@@ -1,10 +1,16 @@
 'use client'
 
 import { BRAND_LOGOS } from '../../lib/brandLogos.js'
+import { useTheme } from '../context/ThemeContext.js'
 
-// Marka logosu varsa şeffaf zeminde gösterir (siyah/koyu logolar koyu temada okunsun diye
-// ince beyaz bir parıltı (drop-shadow) uygulanıyor, kutu/arka plan yok); yoksa gradyanlı harf avatarına düşer.
+// Marka logosu varsa şeffaf zeminde gösterir; yoksa gradyanlı harf avatarına düşer.
+// Koyu temada ince beyaz bir parıltı (drop-shadow) uygulanıyor ki koyu renkli logolar
+// koyu zeminde okunsun; açık temada bunun tersi (ince koyu bir parıltı) uygulanıyor ki
+// logo artık açık/beyaz bir kart üzerinde dursun. Not: tamamen beyaz/çok açık renkli bir
+// logo açık temada yine de zor seçilebilir — bu, otomatik (marka bazlı özel işlem
+// yapılmayan) bir glow yaklaşımının bilinen sınırı.
 export function BrandLogo({ name, className = 'h-9 w-20' }) {
+  const { koyu } = useTheme()
   const logo = BRAND_LOGOS[name]
 
   if (logo) {
@@ -15,7 +21,11 @@ export function BrandLogo({ name, className = 'h-9 w-20' }) {
           src={logo}
           alt={name}
           className="max-h-full max-w-full object-contain"
-          style={{ filter: 'drop-shadow(0 0 0.6px rgba(255,255,255,0.55))' }}
+          style={{
+            filter: koyu
+              ? 'drop-shadow(0 0 0.6px rgba(255,255,255,0.55))'
+              : 'drop-shadow(0 0 0.6px rgba(0,0,0,0.35))',
+          }}
         />
       </div>
     )

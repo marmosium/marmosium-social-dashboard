@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { format } from 'date-fns'
 import { supabase } from '../lib/supabaseClient.js'
 import { useAuth } from './context/AuthContext.js'
+import { useTheme } from './context/ThemeContext.js'
 import { useRouter } from 'next/navigation'
 import { BrandLogo } from './components/BrandLogo.js'
 
@@ -30,6 +31,7 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState(null)
   const [mounted, setMounted] = useState(false)
   const { user, loading: authLoading } = useAuth()
+  const { koyu } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
@@ -159,6 +161,16 @@ export default function Home() {
     ? 'Bağlantı Aktif'
     : `Bağlantı Aktif Değil — ${failedConnections.join(' ve ')} bağlantısı kurulmadı`
 
+  // --- tema tabanlı ortak sınıflar (bkz. app/raporlar/page.js — aynı desen) ---
+  const baslikRengi = koyu ? 'text-white' : 'text-zinc-900'
+  const kenarlik = koyu ? 'border-white/10' : 'border-zinc-200'
+  const kenarlikKalin = koyu ? 'border-zinc-800' : 'border-zinc-200'
+  const bosDurum = koyu ? 'border-white/15 bg-black/10' : 'border-zinc-300 bg-zinc-50'
+  const idDegerMetin = koyu ? 'text-zinc-300' : 'text-zinc-700'
+  const bagliDegilMetin = koyu ? 'text-zinc-400' : 'text-zinc-500'
+  const hataBaslikMetin = koyu ? 'text-zinc-300' : 'text-zinc-700'
+  const bagliDegilFormMetin = koyu ? 'text-zinc-400' : 'text-zinc-600'
+
   const syncModalPortal = mounted && syncModal
     ? createPortal(
         <div
@@ -196,10 +208,10 @@ export default function Home() {
                   </svg>
                 )}
               </div>
-              <h3 className="text-base font-bold text-white">{syncModal.title}</h3>
+              <h3 className={`text-base font-bold ${baslikRengi}`}>{syncModal.title}</h3>
             </div>
 
-            <p className="text-sm text-zinc-300">{syncModal.summary}</p>
+            <p className={`text-sm ${koyu ? 'text-zinc-300' : 'text-zinc-700'}`}>{syncModal.summary}</p>
 
             {syncModal.results.length > 0 && (
               <div className="mt-4 space-y-1.5 max-h-64 overflow-y-auto pr-1">
@@ -208,8 +220,12 @@ export default function Home() {
                     key={idx}
                     className={`flex items-start gap-2 rounded-lg border p-2 text-xs ${
                       r.status === 'ok'
-                        ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-300'
-                        : 'bg-red-500/5 border-red-500/15 text-red-300'
+                        ? koyu
+                          ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-300'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        : koyu
+                        ? 'bg-red-500/5 border-red-500/15 text-red-300'
+                        : 'bg-red-50 border-red-200 text-red-700'
                     }`}
                   >
                     <span className="shrink-0 mt-0.5">{r.status === 'ok' ? '✓' : '✕'}</span>
@@ -268,16 +284,16 @@ export default function Home() {
       {loadingBarPortal}
 
       {/* Welcome & System Status Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b ${kenarlikKalin}`}>
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
+          <h2 className={`text-xl font-bold tracking-tight ${baslikRengi}`}>
             Hoş Geldiniz, {user?.name || user?.email}
           </h2>
           <p className="text-zinc-500 text-xs mt-1">Sosyal medya markalarınızı ve günlük metriklerinizi buradan takip edin.</p>
         </div>
 
         {/* Dynamic Status Indicator */}
-        <div className={`inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-xs ${connectionOk ? 'text-zinc-400' : connectionStatus ? 'text-red-300' : 'text-zinc-400'}`}>
+        <div className={`inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-xs ${connectionOk ? 'text-zinc-400' : connectionStatus ? (koyu ? 'text-red-300' : 'text-red-600') : 'text-zinc-400'}`}>
           <span className="relative flex h-1.5 w-1.5">
             {connectionOk && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
             <span
@@ -293,7 +309,7 @@ export default function Home() {
       <div className="glass rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
+            <h3 className={`text-sm font-semibold flex items-center gap-2 ${koyu ? 'text-zinc-200' : 'text-zinc-800'}`}>
               <svg className="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
               </svg>
@@ -317,7 +333,7 @@ export default function Home() {
 
         {/* Error State (e.g. brands table missing) */}
         {error ? (
-          <div className="bg-amber-500/[0.06] border border-amber-500/20 rounded-xl p-5 text-zinc-300">
+          <div className={`rounded-xl p-5 border ${koyu ? 'bg-amber-500/[0.06] border-amber-500/20' : 'bg-amber-50 border-amber-200'} ${hataBaslikMetin}`}>
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
@@ -326,7 +342,7 @@ export default function Home() {
               </svg>
               <div className="space-y-3 flex-1">
                 <div>
-                  <p className="text-sm font-bold text-white">Veritabanı Tablosu Eksik</p>
+                  <p className={`text-sm font-bold ${baslikRengi}`}>Veritabanı Tablosu Eksik</p>
                   <p className="text-xs text-zinc-500 mt-0.5">`brands` tablosu veritabanınızda bulunamadı. Lütfen SQL şemasını Supabase SQL Editor üzerinden çalıştırın.</p>
                 </div>
                 <div className="bg-black/30 border border-white/10 rounded-lg p-3.5 font-mono text-[10px] text-zinc-400 overflow-x-auto">
@@ -344,7 +360,7 @@ export default function Home() {
           </div>
         ) : brands.length === 0 ? (
           /* Minimalist Empty State */
-          <div className="text-center py-14 border border-dashed border-white/15 rounded-xl bg-black/10">
+          <div className={`text-center py-14 border border-dashed rounded-xl ${bosDurum}`}>
             <svg className="w-8 h-8 text-indigo-400/60 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
@@ -365,19 +381,19 @@ export default function Home() {
                 <div className="flex flex-col items-center text-center gap-3">
                   <BrandLogo name={brand.name} className="h-20 w-full max-w-[220px]" />
                   <div className="min-w-0">
-                    <h4 className="font-bold text-white text-base truncate">{brand.name}</h4>
+                    <h4 className={`font-bold text-base truncate ${baslikRengi}`}>{brand.name}</h4>
                     {brand.client_name && <p className="text-xs text-zinc-500 mt-0.5 truncate">{brand.client_name}</p>}
                   </div>
                 </div>
 
-                <div className="space-y-2 mt-5 pt-4 border-t border-white/10 text-xs text-zinc-400">
+                <div className={`space-y-2 mt-5 pt-4 border-t text-xs text-zinc-400 ${kenarlik}`}>
                   <div className="flex flex-col gap-1 text-[10px]">
                     <span className="text-zinc-500 flex items-center gap-1.5 shrink-0">
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"></span>
                       Facebook Page ID:
                     </span>
-                    <span className="font-mono text-zinc-300 bg-blue-500/10 px-1.5 py-0.5 border border-blue-500/20 rounded break-all">
-                      {brand.fb_page_id || 'Bağlı Değil'}
+                    <span className={`font-mono bg-blue-500/10 px-1.5 py-0.5 border border-blue-500/20 rounded break-all ${idDegerMetin}`}>
+                      {brand.fb_page_id || <span className={bagliDegilMetin}>Bağlı Değil</span>}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 text-[10px]">
@@ -385,18 +401,18 @@ export default function Home() {
                       <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #d946ef, #f59e0b)' }}></span>
                       Instagram Account ID:
                     </span>
-                    <span className="font-mono text-zinc-300 bg-fuchsia-500/10 px-1.5 py-0.5 border border-fuchsia-500/20 rounded break-all">
-                      {brand.ig_account_id || 'Bağlı Değil'}
+                    <span className={`font-mono bg-fuchsia-500/10 px-1.5 py-0.5 border border-fuchsia-500/20 rounded break-all ${idDegerMetin}`}>
+                      {brand.ig_account_id || <span className={bagliDegilMetin}>Bağlı Değil</span>}
                     </span>
                   </div>
                 </div>
 
                 {(metrics[brand.id]?.facebook || metrics[brand.id]?.instagram) && (
-                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-3">
+                  <div className={`mt-4 pt-4 border-t grid grid-cols-2 gap-3 ${kenarlik}`}>
                     {metrics[brand.id]?.facebook && (
                       <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 p-3 min-w-0">
                         <p className="text-[9px] text-blue-300/80 uppercase tracking-wide font-semibold">Facebook</p>
-                        <p className="text-sm font-bold text-white mt-1 truncate">
+                        <p className={`text-sm font-bold mt-1 truncate ${baslikRengi}`}>
                           {metrics[brand.id].facebook.followers ?? '–'} <span className="text-[10px] font-normal text-zinc-500">takipçi</span>
                         </p>
                         <p className="text-[9px] text-zinc-500 mt-1 truncate">
@@ -407,7 +423,7 @@ export default function Home() {
                     {metrics[brand.id]?.instagram && (
                       <div className="rounded-lg bg-fuchsia-500/5 border border-fuchsia-500/10 p-3 min-w-0">
                         <p className="text-[9px] text-fuchsia-300/80 uppercase tracking-wide font-semibold">Instagram</p>
-                        <p className="text-sm font-bold text-white mt-1 truncate">
+                        <p className={`text-sm font-bold mt-1 truncate ${baslikRengi}`}>
                           {metrics[brand.id].instagram.followers ?? '–'} <span className="text-[10px] font-normal text-zinc-500">takipçi</span>
                         </p>
                         <p className="text-[9px] text-zinc-500 mt-1 truncate">
@@ -418,8 +434,8 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="mt-5 pt-4 border-t border-white/10 flex justify-end">
-                  <a href={`/brands/${brand.id}`} className="text-xs font-medium text-zinc-400 hover:text-indigo-300 flex items-center gap-1 transition-button">
+                <div className={`mt-5 pt-4 border-t flex justify-end ${kenarlik}`}>
+                  <a href={`/brands/${brand.id}`} className="text-xs font-medium text-zinc-400 hover:text-indigo-400 flex items-center gap-1 transition-button">
                     İncele <span className="text-[10px]">→</span>
                   </a>
                 </div>

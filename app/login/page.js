@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.js'
+import { useTheme } from '../context/ThemeContext.js'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-function StatChip({ className, style, icon, text }) {
+function StatChip({ className, style, icon, text, metinRengi }) {
   return (
     <div
-      className={`stat-chip hidden sm:flex items-center gap-1.5 glass rounded-full px-3 py-1.5 text-[11px] font-medium text-zinc-300 ${className}`}
+      className={`stat-chip hidden sm:flex items-center gap-1.5 glass rounded-full px-3 py-1.5 text-[11px] font-medium ${metinRengi} ${className}`}
       style={style}
     >
       <span>{icon}</span>
@@ -54,6 +55,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [poppingIndex, setPoppingIndex] = useState(null)
   const { login, user, error: authError } = useAuth()
+  const { koyu } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
@@ -91,6 +93,14 @@ export default function LoginPage() {
     setIsLoading(false)
   }
 
+  // --- tema tabanlı ortak sınıflar (bkz. app/raporlar/page.js — aynı desen) ---
+  const chipMetin = koyu ? 'text-zinc-300' : 'text-zinc-700'
+  const girdiSinifi = koyu
+    ? 'bg-white/5 border-white/10 text-zinc-200 placeholder-zinc-600 focus:border-indigo-400/60'
+    : 'bg-black/[0.03] border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-indigo-500'
+  const etiketRengi = koyu ? 'text-zinc-400' : 'text-zinc-600'
+  const hataKutusu = koyu ? 'bg-red-950/20 border-red-900/30 text-red-400' : 'bg-red-50 border-red-200 text-red-700'
+
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animasyonlu arka plan ışıkları */}
@@ -126,7 +136,7 @@ export default function LoginPage() {
       {/* Dört köşede sabit, birbirinden ayrı dekoratif öğeler — üst üste binmiyor */}
       <IconBadge className="fixed top-6 left-6" style={{ animationDelay: '0.6s', '--chip-rotate': '-4deg' }}>📷</IconBadge>
       <IconBadge className="fixed top-6 right-6" style={{ animationDelay: '1.8s', '--chip-rotate': '4deg' }}>👍</IconBadge>
-      <StatChip icon="⚡" text="Canlı Senkronizasyon" className="fixed bottom-6 left-6" style={{ animationDelay: '2.4s', '--chip-rotate': '-3deg' }} />
+      <StatChip icon="⚡" text="Canlı Senkronizasyon" metinRengi={chipMetin} className="fixed bottom-6 left-6" style={{ animationDelay: '2.4s', '--chip-rotate': '-3deg' }} />
       <div className="fixed bottom-8 right-8 hidden sm:block w-16 h-24 pointer-events-none">
         <span className="heart-pop absolute bottom-0 left-1 text-lg" style={{ animationDelay: '0s' }}>❤️</span>
         <span className="heart-pop absolute bottom-0 left-7 text-sm" style={{ animationDelay: '1s' }}>❤️</span>
@@ -135,8 +145,8 @@ export default function LoginPage() {
 
       <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         {/* Dekoratif istatistik rozetleri */}
-        <StatChip icon="📈" text="↑ %24 Erişim" className="absolute -top-2 -left-4 lg:-left-16" style={{ animationDelay: '0s', '--chip-rotate': '-6deg' }} />
-        <StatChip icon="💬" text="1.2K Etkileşim" className="absolute top-10 -right-4 lg:-right-20" style={{ animationDelay: '1.2s', '--chip-rotate': '5deg' }} />
+        <StatChip icon="📈" text="↑ %24 Erişim" metinRengi={chipMetin} className="absolute -top-2 -left-4 lg:-left-16" style={{ animationDelay: '0s', '--chip-rotate': '-6deg' }} />
+        <StatChip icon="💬" text="1.2K Etkileşim" metinRengi={chipMetin} className="absolute top-10 -right-4 lg:-right-20" style={{ animationDelay: '1.2s', '--chip-rotate': '5deg' }} />
 
         {/* Brand Header */}
         <div className="flex justify-center mb-4">
@@ -173,7 +183,7 @@ export default function LoginPage() {
         <div className="card-enter glass px-6 py-8 shadow-xl rounded-2xl sm:px-10">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-zinc-400">
+              <label htmlFor="email" className={`block text-xs font-medium ${etiketRengi}`}>
                 E-posta Adresi
               </label>
               <div className="mt-1">
@@ -183,7 +193,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="block w-full rounded-lg bg-white/5 border border-white/10 text-zinc-200 px-3 py-2 text-sm placeholder-zinc-600 focus:border-indigo-400/60 focus:ring-0 outline-none transition-button"
+                  className={`block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-0 transition-button ${girdiSinifi}`}
                   placeholder="isim@ajans.com"
                   disabled={isLoading}
                 />
@@ -191,7 +201,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-medium text-zinc-400">
+              <label htmlFor="password" className={`block text-xs font-medium ${etiketRengi}`}>
                 Şifre
               </label>
               <div className="mt-1">
@@ -201,7 +211,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="block w-full rounded-lg bg-white/5 border border-white/10 text-zinc-200 px-3 py-2 text-sm placeholder-zinc-600 focus:border-indigo-400/60 focus:ring-0 outline-none transition-button"
+                  className={`block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-0 transition-button ${girdiSinifi}`}
                   placeholder="••••••••"
                   disabled={isLoading}
                 />
@@ -209,7 +219,7 @@ export default function LoginPage() {
             </div>
 
             {authError && (
-              <div className="rounded-lg bg-red-950/20 border border-red-900/30 p-3 text-xs text-red-400">
+              <div className={`rounded-lg border p-3 text-xs ${hataKutusu}`}>
                 <div className="flex gap-2">
                   <span className="shrink-0">⚠️</span>
                   <p>{authError}</p>

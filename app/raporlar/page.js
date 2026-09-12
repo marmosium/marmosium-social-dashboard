@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext.js'
+import { useTheme } from '../context/ThemeContext.js'
 import {
   filtreleAylar,
   duzDosyaListesi,
@@ -11,8 +13,6 @@ import {
   sonrakiIndeks,
   odaktaGirdiVarMi,
 } from './raporlarUtils.mjs'
-
-const TEMA_ANAHTARI = 'raporlar-tema'
 
 const KISAYOLLAR = [
   { tus: '/', aciklama: 'Aramaya odaklan' },
@@ -25,51 +25,27 @@ const KISAYOLLAR = [
 
 export default function RaporlarPage() {
   const { user, loading: authLoading } = useAuth()
+  const { koyu, temaDegistir } = useTheme()
   const router = useRouter()
 
   const [aylar, setAylar] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const [tema, setTema] = useState('dark')
   const [sorgu, setSorgu] = useState('')
   const [platform, setPlatform] = useState('all')
   const [onizlemeIndeksi, setOnizlemeIndeksi] = useState(null)
   const [onizlemeFormati, setOnizlemeFormati] = useState(null)
   const [kisayolPaneliAcik, setKisayolPaneliAcik] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const aramaRef = useRef(null)
 
-  // --- tema tercihini yükle (localStorage -> yoksa sistem tercihi -> yoksa koyu) ---
+  // Önizleme modalı bir portal ile document.body'ye render edilir (bkz. aşağısı) —
+  // bunun için document nesnesinin var olduğu istemci tarafında olduğumuzu bilmemiz
+  // gerekiyor (Next.js sunucu tarafında render ederken document yok).
   useEffect(() => {
-    try {
-      const kayitli = window.localStorage.getItem(TEMA_ANAHTARI)
-      if (kayitli === 'light' || kayitli === 'dark') {
-        setTema(kayitli)
-        return
-      }
-    } catch (e) {
-      // localStorage erişilemez olabilir (gizli sekme vb.) - sorun değil, devam
-    }
-    try {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        setTema('light')
-      }
-    } catch (e) {
-      // matchMedia yoksa varsayılan koyu temada kal
-    }
+    setMounted(true)
   }, [])
-
-  function temaDegistir() {
-    setTema((onceki) => {
-      const yeni = onceki === 'dark' ? 'light' : 'dark'
-      try {
-        window.localStorage.setItem(TEMA_ANAHTARI, yeni)
-      } catch (e) {
-        // yazılamazsa da tema bu oturumda değişmeye devam eder
-      }
-      return yeni
-    })
-  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -187,11 +163,10 @@ export default function RaporlarPage() {
     window.addEventListener('keydown', tusaBasildi)
     return () => window.removeEventListener('keydown', tusaBasildi)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onizlemeIndeksi, onizlemeFormati, duzListe, kisayolPaneliAcik, onizlenenGirdi])
+  }, [onizlemeIndeksi, onizlemeFormati, duzListe, kisayolPaneliAcik, onizlenenGirdi, temaDegistir])
 
-  const koyu = tema === 'dark'
-
-  // --- tema tabanlı ortak sınıflar ---
+  // --- tema tabanlı ortak sınıflar --- (tema artık site genelinde ThemeContext'ten geliyor,
+  // bu sayfanın kendi yerel tema state'i/localStorage anahtarı kaldırıldı)
   const s = koyu
     ? {
         panel: 'bg-white/[0.03] border-white/10',
@@ -238,11 +213,121 @@ export default function RaporlarPage() {
     )
   }
 
+  // Önizleme modalı — document.body'ye portal edilir. Nedeni: paylaşılan layout.js'teki
+  // <main>, giriş animasyonu (animate-fade-in-up, animation:...both) yüzünden kalıcı bir
+  // transform:translateY(0) taşıyor; CSS'e göre transform'u olan HER eleman position:fixed
+  // torunları için yeni bir "containing block" oluşturur. Bu yüzden modal <main>'in İÇİNDE
+  // render edilirse "fixed inset-0" viewport'a değil <main>'in kutusuna göre konumlanıyordu
+  // (12 Eylül 2026'da canlıda tıklanınca raporun "çok alakasız bir yerde" -- aslında sayfanın
+  // en altında, <main>'in tüm scroll yüksekliği kadar aşağıda -- açılması bu yüzdendi).
+  // Portal bu sorunu kökten çözüyor: <main>'in transform'undan tamamen bağımsız hale getiriyor.
+  const onizlemeModali =
+    mounted && onizlenenGirdi
+      ? createPortal(
+          <div
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 ${s.modalArkaplan}`}
+            onClick={onizlemeKapat}
+          >
+            <div
+              className={`relative w-full max-w-3xl max-h-full rounded-2xl border overflow-hidden flex flex-col ${s.modalYuzey}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${koyu ? 'border-white/10' : 'border-zinc-200'}`}>
+                <div className="min-w-0">
+                  <p className={`text-sm font-semibold truncate ${s.baslik}`}>{onizlenenGirdi.marka}</p>
+                  <p className={`text-xs ${s.metinSoluk}`}>
+                    {onizlenenGirdi.ay} · {onizlenenGirdi.rapor.platform === 'instagram' ? 'Instagram' : 'Facebook'}
+                    {' · '}
+                    {onizlemeIndeksi + 1}/{duzListe.length}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {Object.keys(onizlenenGirdi.rapor.formatlar).length > 1 &&
+                    Object.keys(onizlenenGirdi.rapor.formatlar).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setOnizlemeFormati(f)}
+                        className={`text-[11px] font-semibold px-2 py-1 rounded-md border transition-button ${
+                          onizlemeFormati === f ? s.chipAktif : s.chip
+                        }`}
+                      >
+                        {f.toUpperCase()}
+                      </button>
+                    ))}
+                  <button
+                    type="button"
+                    onClick={() => dosyaIndir(onizlenenGirdi.rapor.formatlar[onizlemeFormati]?.url)}
+                    title="İndir (D)"
+                    className={`text-xs font-medium px-2.5 py-1.5 rounded-md border transition-button ${s.ikincilBtn}`}
+                  >
+                    İndir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onizlemeKapat}
+                    aria-label="Kapat"
+                    title="Kapat (Esc)"
+                    className={`h-7 w-7 rounded-md border flex items-center justify-center transition-button ${s.ikincilBtn}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className={`flex-1 min-h-0 flex items-center justify-center relative ${koyu ? 'bg-black/30' : 'bg-zinc-100'}`}>
+                <button
+                  type="button"
+                  onClick={() => onizlemeGezin(-1)}
+                  aria-label="Önceki rapor"
+                  title="Önceki (←)"
+                  className={`absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border flex items-center justify-center transition-button ${s.ikincilBtn}`}
+                >
+                  ‹
+                </button>
+
+                {onizlemeFormati === 'pdf' ? (
+                  <iframe
+                    key={onizlenenGirdi.rapor.formatlar.pdf.url}
+                    src={onizlenenGirdi.rapor.formatlar.pdf.url}
+                    title={`${onizlenenGirdi.marka} ${onizlenenGirdi.ay} PDF önizleme`}
+                    className="w-full h-[70vh] bg-white"
+                  />
+                ) : onizlenenGirdi.rapor.formatlar.png ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={onizlenenGirdi.rapor.formatlar.png.url}
+                    src={onizlenenGirdi.rapor.formatlar.png.url}
+                    alt={`${onizlenenGirdi.marka} — ${onizlenenGirdi.ay} — ${onizlenenGirdi.rapor.platform}`}
+                    className="max-h-[70vh] max-w-full object-contain"
+                  />
+                ) : (
+                  <p className={`text-sm ${s.metinSoluk}`}>Bu rapor için önizlenebilir bir dosya yok.</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onizlemeGezin(1)}
+                  aria-label="Sonraki rapor"
+                  title="Sonraki (→)"
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border flex items-center justify-center transition-button ${s.ikincilBtn}`}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null
+
   return (
     <div
       className={`space-y-6 rounded-2xl p-4 sm:p-6 -mx-4 sm:-mx-6 lg:-mx-8 ${koyu ? '' : 'bg-zinc-50'}`}
       style={!koyu ? { minHeight: 'calc(100vh - 6rem)' } : undefined}
     >
+      {onizlemeModali}
+
       {/* Başlık + genel eylemler */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-current/10">
         <div>
@@ -260,15 +345,6 @@ export default function RaporlarPage() {
             className={`h-8 w-8 rounded-lg border flex items-center justify-center text-xs font-semibold transition-button ${s.ikincilBtn}`}
           >
             ⌨
-          </button>
-          <button
-            type="button"
-            onClick={temaDegistir}
-            title="Temayı değiştir (T)"
-            aria-label="Temayı değiştir"
-            className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-button ${s.ikincilBtn}`}
-          >
-            {koyu ? '☀️' : '🌙'}
           </button>
           {toplamRaporSayisi > 0 && (
             <a
@@ -383,17 +459,17 @@ export default function RaporlarPage() {
                           type="button"
                           onClick={() => onizlemeAc(globalIndeks)}
                           className={`w-28 rounded-xl border overflow-hidden text-left transition-card ${s.panel} ${s.panelHover}`}
-                      >
-                        <div className={`h-16 flex items-center justify-center text-[10px] font-semibold tracking-wide ${koyu ? 'bg-black/20 text-zinc-500' : 'bg-zinc-50 text-zinc-400'}`}>
-                          {rapor.platform === 'instagram' ? 'IG' : 'FB'}
-                        </div>
-                        <div className="px-2 py-1.5">
-                          <p className={`text-[10px] font-medium truncate ${s.metin}`}>
-                            {rapor.platform === 'instagram' ? 'Instagram' : 'Facebook'}
-                          </p>
-                          <p className={`text-[9px] ${s.metinSoluk}`}>{formatEtiketi}</p>
-                        </div>
-                      </button>
+                        >
+                          <div className={`h-16 flex items-center justify-center text-[10px] font-semibold tracking-wide ${koyu ? 'bg-black/20 text-zinc-500' : 'bg-zinc-50 text-zinc-400'}`}>
+                            {rapor.platform === 'instagram' ? 'IG' : 'FB'}
+                          </div>
+                          <div className="px-2 py-1.5">
+                            <p className={`text-[10px] font-medium truncate ${s.metin}`}>
+                              {rapor.platform === 'instagram' ? 'Instagram' : 'Facebook'}
+                            </p>
+                            <p className={`text-[9px] ${s.metinSoluk}`}>{formatEtiketi}</p>
+                          </div>
+                        </button>
                       )
                     })}
                   </div>
@@ -402,103 +478,6 @@ export default function RaporlarPage() {
             </div>
           </div>
         ))
-      )}
-
-      {/* Önizleme modalı */}
-      {onizlenenGirdi && (
-        <div
-          className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 ${s.modalArkaplan}`}
-          onClick={onizlemeKapat}
-        >
-          <div
-            className={`relative w-full max-w-3xl max-h-full rounded-2xl border overflow-hidden flex flex-col ${s.modalYuzey}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b ${koyu ? 'border-white/10' : 'border-zinc-200'}`}>
-              <div className="min-w-0">
-                <p className={`text-sm font-semibold truncate ${s.baslik}`}>{onizlenenGirdi.marka}</p>
-                <p className={`text-xs ${s.metinSoluk}`}>
-                  {onizlenenGirdi.ay} · {onizlenenGirdi.rapor.platform === 'instagram' ? 'Instagram' : 'Facebook'}
-                  {' · '}
-                  {onizlemeIndeksi + 1}/{duzListe.length}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {Object.keys(onizlenenGirdi.rapor.formatlar).length > 1 &&
-                  Object.keys(onizlenenGirdi.rapor.formatlar).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setOnizlemeFormati(f)}
-                      className={`text-[11px] font-semibold px-2 py-1 rounded-md border transition-button ${
-                        onizlemeFormati === f ? s.chipAktif : s.chip
-                      }`}
-                    >
-                      {f.toUpperCase()}
-                    </button>
-                  ))}
-                <button
-                  type="button"
-                  onClick={() => dosyaIndir(onizlenenGirdi.rapor.formatlar[onizlemeFormati]?.url)}
-                  title="İndir (D)"
-                  className={`text-xs font-medium px-2.5 py-1.5 rounded-md border transition-button ${s.ikincilBtn}`}
-                >
-                  İndir
-                </button>
-                <button
-                  type="button"
-                  onClick={onizlemeKapat}
-                  aria-label="Kapat"
-                  title="Kapat (Esc)"
-                  className={`h-7 w-7 rounded-md border flex items-center justify-center transition-button ${s.ikincilBtn}`}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            <div className={`flex-1 min-h-0 flex items-center justify-center relative ${koyu ? 'bg-black/30' : 'bg-zinc-100'}`}>
-              <button
-                type="button"
-                onClick={() => onizlemeGezin(-1)}
-                aria-label="Önceki rapor"
-                title="Önceki (←)"
-                className={`absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border flex items-center justify-center transition-button ${s.ikincilBtn}`}
-              >
-                ‹
-              </button>
-
-              {onizlemeFormati === 'pdf' ? (
-                <iframe
-                  key={onizlenenGirdi.rapor.formatlar.pdf.url}
-                  src={onizlenenGirdi.rapor.formatlar.pdf.url}
-                  title={`${onizlenenGirdi.marka} ${onizlenenGirdi.ay} PDF önizleme`}
-                  className="w-full h-[70vh] bg-white"
-                />
-              ) : onizlenenGirdi.rapor.formatlar.png ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={onizlenenGirdi.rapor.formatlar.png.url}
-                  src={onizlenenGirdi.rapor.formatlar.png.url}
-                  alt={`${onizlenenGirdi.marka} — ${onizlenenGirdi.ay} — ${onizlenenGirdi.rapor.platform}`}
-                  className="max-h-[70vh] max-w-full object-contain"
-                />
-              ) : (
-                <p className={`text-sm ${s.metinSoluk}`}>Bu rapor için önizlenebilir bir dosya yok.</p>
-              )}
-
-              <button
-                type="button"
-                onClick={() => onizlemeGezin(1)}
-                aria-label="Sonraki rapor"
-                title="Sonraki (→)"
-                className={`absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border flex items-center justify-center transition-button ${s.ikincilBtn}`}
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
