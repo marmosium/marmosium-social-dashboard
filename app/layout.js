@@ -43,6 +43,9 @@ function LayoutContent({ children }) {
 
           {user && (
             <div className="flex items-center gap-5">
+              <a href="/raporlar" className="text-xs font-medium text-zinc-400 hover:text-indigo-300 transition-button whitespace-nowrap">
+                Raporlar
+              </a>
               <div className="flex items-center gap-2.5">
                 <div className="h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-sm" style={{ backgroundImage: 'linear-gradient(135deg, #6366f1, #d946ef)' }}>
                   {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
