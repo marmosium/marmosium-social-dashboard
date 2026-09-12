@@ -73,12 +73,30 @@ export async function GET(request) {
   archive.finalize()
 
   const adParcasi = (marka || ay || 'tum-raporlar').replace(/\s+/g, '-')
+  const dosyaAdi = `${adParcasi}-raporlar.zip`
+
+  // HTTP header degerleri ISO-8859-1 ("ByteString") olmak zorunda. Turkce
+  // ğ/ı/İ/ş gibi karakterler bu araligin disinda kaliyor (ör. 'ğ' = 287 > 255)
+  // ve NextResponse'a dogrudan Unicode header verilince "Cannot convert
+  // argument to a ByteString" TypeError'i ile 500 donuyordu (ör. "Ağustos"
+  // veya "Mayıs" icin ZIP indirme). Cozum: eski istemciler icin ASCII'ye
+  // cevrilmis bir dosya adi + modern tarayicilar icin RFC 5987 filename*
+  // (yuzde kodlanmis UTF-8) birlikte gonderiliyor.
+  const asciiDosyaAdi = dosyaAdi
+    .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+    .replace(/ı/g, 'i').replace(/İ/g, 'I')
+    .replace(/ş/g, 's').replace(/Ş/g, 'S')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+    .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/[^\x20-\x7E]/g, '_')
+
   const webStream = Readable.toWeb(archive)
 
   return new NextResponse(webStream, {
     headers: {
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${adParcasi}-raporlar.zip"`,
+      'Content-Disposition': `attachment; filename="${asciiDosyaAdi}"; filename*=UTF-8''${encodeURIComponent(dosyaAdi)}`,
     },
   })
 }
