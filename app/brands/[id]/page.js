@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { startOfMonth, endOfMonth, subDays, differenceInCalendarDays, format, isSameMonth } from 'date-fns'
+import { startOfMonth, endOfMonth, subMonths, format, isSameMonth } from 'date-fns'
 import { supabase } from '../../../lib/supabaseClient.js'
 import { useAuth } from '../../context/AuthContext.js'
 import { PlatformReport } from './PlatformReport.js'
@@ -65,9 +65,13 @@ export default function BrandReportPage() {
       const isCurrentMonth = isSameMonth(selectedMonthDate, new Date())
       const monthEnd = isCurrentMonth ? new Date() : endOfMonth(selectedMonthDate)
 
-      const rangeLength = differenceInCalendarDays(monthEnd, monthStart) + 1
-      const prevEnd = subDays(monthStart, 1)
-      const prevStart = subDays(prevEnd, rangeLength - 1)
+      // Karsilastirma HER ZAMAN bir onceki TAKVIM AYININ TAMAMIYLA yapilir
+      // (or. Eylul -> 1-30 Eylul vs 1-31 Agustos). Onceki donem asla "ayni
+      // uzunlukta trailing pencere" olarak hesaplanmaz -- ay uzunluklari
+      // farkli olsa bile (28-31 gun) karsilastirma hep tam ay ile tam aydir.
+      const previousMonthDate = subMonths(monthStart, 1)
+      const prevStart = startOfMonth(previousMonthDate)
+      const prevEnd = endOfMonth(previousMonthDate)
 
       const since = toISODate(monthStart)
       const until = toISODate(monthEnd)

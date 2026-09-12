@@ -168,7 +168,7 @@ export function PlatformReport({ rows, previousRows, sinceLabel, untilLabel, pre
       {/* 3. Karşılaştırma Tablosu */}
       <div>
         <h4 className="text-sm font-semibold text-zinc-200">Karşılaştırma Tablosu</h4>
-        <p className="text-[11px] text-zinc-500 mb-3">Bu dönem, hemen öncesindeki eşit uzunluktaki dönemle karşılaştırılıyor — "iyileşti mi kötüleşti mi" sorusunun cevabı.</p>
+        <p className="text-[11px] text-zinc-500 mb-3">Bu dönem, bir önceki takvim ayının tamamıyla karşılaştırılıyor — "iyileşti mi kötüleşti mi" sorusunun cevabı.</p>
         <div className="premium-card rounded-xl overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
