@@ -29,8 +29,11 @@ const BRANDS = [
   { name: 'The S Cafe Bistro', ig: '17841468178594887' },
 ]
 
+// Meta total_value: since/until arasında en fazla 30 gün olabilir (#100 hatası).
+// 31 günlük Ağustos'u iki parçaya bölüp topluyoruz.
 const PERIODS = [
-  { key: 'agustos', since: '2026-08-01', until: '2026-09-01' },
+  { key: 'agustos_1', since: '2026-08-01', until: '2026-08-17' },
+  { key: 'agustos_2', since: '2026-08-17', until: '2026-09-01' },
   { key: 'eylul_1_10', since: '2026-09-01', until: '2026-09-11' },
 ]
 
@@ -58,6 +61,18 @@ export async function GET() {
         out[brand.name][period.key] = totals
       } catch (e) {
         out[brand.name][period.key] = { error: e.message }
+      }
+    }
+  }
+  // agustos_1 + agustos_2 toplamını "agustos" olarak ekle
+  for (const brand of BRANDS) {
+    const a1 = out[brand.name].agustos_1
+    const a2 = out[brand.name].agustos_2
+    if (a1 && !a1.error && a2 && !a2.error) {
+      out[brand.name].agustos = {
+        profile_views: a1.profile_views + a2.profile_views,
+        total_interactions: a1.total_interactions + a2.total_interactions,
+        website_clicks: a1.website_clicks + a2.website_clicks,
       }
     }
   }
