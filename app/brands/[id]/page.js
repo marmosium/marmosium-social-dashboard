@@ -56,6 +56,12 @@ export default function BrandReportPage() {
         .single()
 
       if (brandError) throw brandError
+
+      if (brandData.is_active === false) {
+        setError('Bu marka artık aktif değil, bu yüzden rapor gösterilmiyor.')
+        return
+      }
+
       setBrand(brandData)
       if (!activeTab) {
         setActiveTab(brandData.ig_account_id ? 'instagram' : 'facebook')
