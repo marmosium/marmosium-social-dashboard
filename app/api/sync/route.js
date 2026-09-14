@@ -18,9 +18,9 @@ function pivotByDate(rawMetrics) {
   return byDate
 }
 
-async function runSync() {
-  const until = format(new Date(), 'yyyy-MM-dd')
-  const since = format(subDays(new Date(), 7), 'yyyy-MM-dd')
+async function runSync({ sinceOverride, untilOverride } = {}) {
+  const until = untilOverride || format(new Date(), 'yyyy-MM-dd')
+  const since = sinceOverride || format(subDays(new Date(), 7), 'yyyy-MM-dd')
   const syncedAt = new Date().toISOString()
 
   // Markalar artık burada manuel eklenmiyor; Meta sistem kullanıcısının erişebildiği
@@ -89,17 +89,20 @@ async function runSync() {
       }
 
       if (brand.ig_account_id) {
-        const { followers, raw, totals } = await fetchInstagramInsights(brand.ig_account_id, since, until)
+        const { followers, raw, totalsByDate } = await fetchInstagramInsights(brand.ig_account_id, since, until)
         const byDate = pivotByDate(raw)
 
-        // "views", "profile_views", "total_interactions", "website_clicks" artık günlük değil,
-        // since/until aralığının tek toplamı olarak geliyor (bkz. lib/meta.js) — bu yüzden
-        // aralığın son gününe (until) ekleniyor. "reach" ve "follower_count" zaten günlük geldiği
-        // için normal şekilde byDate içinde yer alıyor.
-        if (!byDate[until]) byDate[until] = {}
-        byDate[until].profile_views = totals.profile_views
-        byDate[until].total_interactions = totals.total_interactions
-        byDate[until].website_clicks = totals.website_clicks
+        // "profile_views", "total_interactions", "website_clicks" artık her gün için ayrı ayrı
+        // geliyor (bkz. lib/meta.js'teki totalsByDate) — 14 Eylül 2026 düzeltmesinden önce sadece
+        // aralığın son gününe (until) yazılıyordu, aralıktaki diğer günler bu üç alan için kalıcı
+        // NULL kalıyordu. "reach" ve "follower_count" zaten günlük geldiği için normal şekilde
+        // byDate içinde yer alıyor.
+        for (const [metric_date, totals] of Object.entries(totalsByDate)) {
+          if (!byDate[metric_date]) byDate[metric_date] = {}
+          byDate[metric_date].profile_views = totals.profile_views
+          byDate[metric_date].total_interactions = totals.total_interactions
+          byDate[metric_date].website_clicks = totals.website_clicks
+        }
 
         for (const [metric_date, values] of Object.entries(byDate)) {
           const { error } = await supabaseAdmin.from('daily_metrics').upsert(
@@ -134,8 +137,11 @@ async function runSync() {
   return { since, until, discovered, results, status: 200 }
 }
 
-export async function POST() {
-  const result = await runSync()
+export async function POST(request) {
+  const { searchParams } = new URL(request.url)
+  const sinceOverride = searchParams.get('since') || undefined
+  const untilOverride = searchParams.get('until') || undefined
+  const result = await runSync({ sinceOverride, untilOverride })
   const { status, ...body } = result
   return Response.json(body, { status: status || 200 })
 }
