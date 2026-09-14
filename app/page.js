@@ -8,6 +8,7 @@ import { useAuth } from './context/AuthContext.js'
 import { useTheme } from './context/ThemeContext.js'
 import { useRouter } from 'next/navigation'
 import { BrandLogo } from './components/BrandLogo.js'
+import GenelBakis from './components/GenelBakis.js'
 
 function formatDateStr(dateStr) {
   if (!dateStr) return '–'
@@ -305,6 +306,8 @@ export default function Home() {
           <span className="text-[10px] uppercase tracking-wider font-semibold">{connectionLabel}</span>
         </div>
       </div>
+
+      <GenelBakis brands={brands} metrics={metrics} />
 
       <div className="glass rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">

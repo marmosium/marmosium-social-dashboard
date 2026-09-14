@@ -460,8 +460,20 @@ export default function RaporlarPage() {
                           onClick={() => onizlemeAc(globalIndeks)}
                           className={`w-28 rounded-xl border overflow-hidden text-left transition-card ${s.panel} ${s.panelHover}`}
                         >
-                          <div className={`h-16 flex items-center justify-center text-[10px] font-semibold tracking-wide ${koyu ? 'bg-black/20 text-zinc-500' : 'bg-zinc-50 text-zinc-400'}`}>
-                            {rapor.platform === 'instagram' ? 'IG' : 'FB'}
+                          <div className={`h-16 flex items-center justify-center ${koyu ? 'bg-black/20' : 'bg-zinc-50'}`}>
+                            {rapor.platform === 'instagram' ? (
+                              <svg viewBox="0 0 24 24" className="w-7 h-7" aria-label="Instagram">
+                                <rect x="1" y="1" width="22" height="22" rx="6" fill="#E4405F" />
+                                <rect x="6.5" y="6.5" width="11" height="11" rx="3.5" fill="none" stroke="#fff" strokeWidth="1.6" />
+                                <circle cx="12" cy="12" r="3" fill="none" stroke="#fff" strokeWidth="1.6" />
+                                <circle cx="16.2" cy="7.8" r="1" fill="#fff" />
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" className="w-7 h-7" aria-label="Facebook">
+                                <rect width="24" height="24" rx="6" fill="#1877F2" />
+                                <path d="M15.5 8.5h-1.6c-.5 0-.9.4-.9 1v1.5h2.4l-.3 2.4h-2.1V19h-2.5v-5.6H8.5v-2.4h1.9V9.2c0-1.9 1.1-3 2.9-3h1.7v2.3z" fill="#fff" />
+                              </svg>
+                            )}
                           </div>
                           <div className="px-2 py-1.5">
                             <p className={`text-[10px] font-medium truncate ${s.metin}`}>
