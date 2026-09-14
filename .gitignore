@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-eski-*/
 .env.local
 .env
 *.log
@@ -21,3 +22,6 @@ node_modules/
 
 # Şeffaflaştırma öncesi orijinal logo yedekleri (repoyu şişirmesin, yerelde saklı kalsın)
 /public/logos/_originals/
+
+# next dev sirasinda cache bozulursa 'mv .next .next-eski-...' ile kenara alinan klasorler
+# (bu klasorde silme izni yok, sadece yeniden adlandirma calisiyor) - repoya girmesin

@@ -331,7 +331,8 @@ export default function RaporlarPage() {
       {/* Başlık + genel eylemler */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-current/10">
         <div>
-          <h2 className={`text-xl font-bold tracking-tight ${s.baslik}`}>Raporlar</h2>
+          <a href="/" className="text-xs text-zinc-500 hover:text-indigo-400 transition-button">← Dashboard'a dön</a>
+          <h2 className={`text-xl font-bold tracking-tight mt-1 ${s.baslik}`}>Raporlar</h2>
           <p className={`text-xs mt-1 ${s.altBaslik}`}>
             {toplamRaporSayisi} rapor · ay ay görüntüleyin, tek tek veya toplu indirin.
           </p>
